@@ -12,8 +12,18 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddOutputCache();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 //Os serviços só podem ser alterados antes da aplicação ser criada, por isso a linha abaixo vem em seguida.
 var app = builder.Build();
+
+if (builder.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 
 app.UseCors();
 
