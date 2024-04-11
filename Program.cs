@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MoviesApp.DatabaseContext;
 using MoviesApp.Entities;
+using MoviesApp.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => {
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IGenresRepository, GenresRepository>();
 
 //Os serviços só podem ser alterados antes da aplicação ser criada, por isso a linha abaixo vem em seguida.
 var app = builder.Build();
@@ -46,5 +48,11 @@ app.MapGet("/genres", () =>
 
     return genres;
 }).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(15)));
+
+app.MapPost("/genres", async (Genre genre, IGenresRepository repository) =>
+{
+    var id = await repository.Create(genre);
+    return Results.Created($"/genres/{id}", genre);
+});
 
 app.Run();
