@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using MoviesApp.DatabaseContext;
 using MoviesApp.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +13,9 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddOutputCache();
-
+builder.Services.AddDbContext<ApplicationDbContext>(options => {
+    options.UseMySQL(builder.Configuration.GetConnectionString("desenv_mysql")!);
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
