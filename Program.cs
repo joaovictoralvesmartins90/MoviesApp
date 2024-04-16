@@ -15,7 +15,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddOutputCache();
 builder.Services.AddDbContext<ApplicationDbContext>(options => {
-    options.UseMySQL(builder.Configuration.GetConnectionString("desenv_mysql")!);
+    options.UseMySQL(builder.Configuration.GetConnectionString("desenv_mysql_desktop")!);
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
