@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using MoviesApp.DatabaseContext;
 using MoviesApp.Entities;
@@ -37,21 +38,28 @@ app.UseOutputCache();
 
 app.MapGet("/", () => "Hello World!");
 
-app.MapGet("/genres", () =>
+app.MapGet("/genres", async (IGenresRepository repository) =>
 {
-    List<Genre> genres = new List<Genre>(
-        )
+    var genres = await repository.GetAll();
+    return Results.Ok(genres);
+});
+
+app.MapGet("/genres/{id:int}", async (int id, IGenresRepository repository) =>
+{
+    var genre = await repository.GetById(id);
+
+    if (genre == null)
     {
-        new Genre{Id = 1, Name = "Drama"},
-        new Genre{Id = 2, Name = "Action"}
-    };
+        return Results.NotFound();
+    }
 
-    return genres;
-}).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(15)));
+    return Results.Ok(genre);
+}).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(300)).Tag("genres-get"));
 
-app.MapPost("/genres", async (Genre genre, IGenresRepository repository) =>
+app.MapPost("/genres", async (Genre genre, IGenresRepository repository, IOutputCacheStore outputCacheStore) =>
 {
     var id = await repository.Create(genre);
+    await outputCacheStore.EvictByTagAsync("genres-get", default);
     return Results.Created($"/genres/{id}", genre);
 });
 
