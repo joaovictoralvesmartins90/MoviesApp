@@ -54,13 +54,41 @@ app.MapGet("/genres/{id:int}", async (int id, IGenresRepository repository) =>
     }
 
     return Results.Ok(genre);
-}).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(300)).Tag("genres-get"));
+}).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(10)).Tag("genres-get"));
 
 app.MapPost("/genres", async (Genre genre, IGenresRepository repository, IOutputCacheStore outputCacheStore) =>
 {
     var id = await repository.Create(genre);
     await outputCacheStore.EvictByTagAsync("genres-get", default);
     return Results.Created($"/genres/{id}", genre);
+});
+
+app.MapPut("/genres/{id:int}", async (int id, Genre genre, IGenresRepository repository, IOutputCacheStore outputCacheStore) =>
+{
+    var exists = await repository.Exists(id);
+
+    if (!exists)
+    {
+        return Results.NotFound();
+    }
+
+    await repository.Update(genre);
+    await outputCacheStore.EvictByTagAsync("genres-get", default);
+    return Results.NoContent();
+});
+
+app.MapDelete("/genres/{id:int}", async (int id, IGenresRepository repository, IOutputCacheStore outputCacheStore) =>
+{
+    var exists = await repository.Exists(id);
+
+    if (!exists)
+    {
+        return Results.NotFound();
+    }
+
+    await repository.Delete(id);
+    await outputCacheStore.EvictByTagAsync("genres-get", default);
+    return Results.NoContent();
 });
 
 app.Run();

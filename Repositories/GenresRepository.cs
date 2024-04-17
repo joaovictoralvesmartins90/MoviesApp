@@ -18,14 +18,30 @@ namespace MoviesApp.Repositories
             return genre.Id;//após inserir no banco, insere o id no objeto
         }
 
+        public async Task Delete(int id)
+        {
+            await context.Genres.Where(g => g.Id == id).ExecuteDeleteAsync();
+        }
+
+        public async Task<bool> Exists(int id)
+        {
+            return await context.Genres.AnyAsync(x => x.Id == id);
+        }
+
         public async Task<List<Genre>> GetAll()
         {
-            return await context.Genres.ToListAsync();
+            return await context.Genres.OrderBy(g => g.Name).ToListAsync();
         }
 
         public async Task<Genre?> GetById(int id)
         {
-            return await context.Genres.FirstOrDefaultAsync(g => g.Id.Equals(id));
+            return await context.Genres.FirstOrDefaultAsync(g => g.Id == id);
+        }
+
+        public async Task Update(Genre genre)
+        {
+            context.Update(genre);
+            await context.SaveChangesAsync();
         }
     }
 }
