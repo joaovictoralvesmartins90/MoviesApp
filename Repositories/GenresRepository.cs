@@ -40,7 +40,7 @@ namespace MoviesApp.Repositories
 
         public async Task Update(Genre genre)
         {
-            context.Update(genre);
+            context.Genres.Update(genre);
             await context.SaveChangesAsync();
         }
     }
