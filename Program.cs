@@ -6,6 +6,7 @@ using MoviesApp.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//Serviços
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(configuration =>
@@ -21,30 +22,30 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => {
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IGenresRepository, GenresRepository>();
+//Serviços
 
 //Os serviços só podem ser alterados antes da aplicação ser criada, por isso a linha abaixo vem em seguida.
 var app = builder.Build();
 
+//middleware
 if (builder.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-
 app.UseCors();
-
 app.UseOutputCache();
+//middleware
 
-app.MapGet("/", () => "Hello World!");
+var genresEndpoints = app.MapGroup("/genres");
 
-app.MapGet("/genres", async (IGenresRepository repository) =>
+genresEndpoints.MapGet("/", async (IGenresRepository repository) =>
 {
     var genres = await repository.GetAll();
     return Results.Ok(genres);
 });
 
-app.MapGet("/genres/{id:int}", async (int id, IGenresRepository repository) =>
+genresEndpoints.MapGet("/{id:int}", async (int id, IGenresRepository repository) =>
 {
     var genre = await repository.GetById(id);
 
@@ -56,14 +57,14 @@ app.MapGet("/genres/{id:int}", async (int id, IGenresRepository repository) =>
     return Results.Ok(genre);
 }).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(10)).Tag("genres-get"));
 
-app.MapPost("/genres", async (Genre genre, IGenresRepository repository, IOutputCacheStore outputCacheStore) =>
+genresEndpoints.MapPost("/", async (Genre genre, IGenresRepository repository, IOutputCacheStore outputCacheStore) =>
 {
     var id = await repository.Create(genre);
     await outputCacheStore.EvictByTagAsync("genres-get", default);
     return Results.Created($"/genres/{id}", genre);
 });
 
-app.MapPut("/genres/{id:int}", async (int id, Genre genre, IGenresRepository repository, IOutputCacheStore outputCacheStore) =>
+genresEndpoints.MapPut("/{id:int}", async (int id, Genre genre, IGenresRepository repository, IOutputCacheStore outputCacheStore) =>
 {
     var exists = await repository.Exists(id);
 
@@ -77,7 +78,7 @@ app.MapPut("/genres/{id:int}", async (int id, Genre genre, IGenresRepository rep
     return Results.NoContent();
 });
 
-app.MapDelete("/genres/{id:int}", async (int id, IGenresRepository repository, IOutputCacheStore outputCacheStore) =>
+genresEndpoints.MapDelete("/{id:int}", async (int id, IGenresRepository repository, IOutputCacheStore outputCacheStore) =>
 {
     var exists = await repository.Exists(id);
 
