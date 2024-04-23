@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OutputCaching;
+using MoviesApp.DTOs;
 using MoviesApp.Entities;
 using MoviesApp.Repositories;
 
@@ -35,7 +36,7 @@ namespace MoviesApp.Endpoints
             return TypedResults.Ok(genre);
         }
 
-        static async Task<Results<NoContent, NotFound>> UpdateGenre(int id, Genre genre, IGenresRepository repository, IOutputCacheStore outputCacheStore)
+        static async Task<Results<NoContent, NotFound>> UpdateGenre(int id, CreateGenreDTO createGenreDTO, IGenresRepository repository, IOutputCacheStore outputCacheStore)
         {
             var exists = await repository.Exists(id);
 
@@ -43,6 +44,8 @@ namespace MoviesApp.Endpoints
             {
                 return TypedResults.NotFound();
             }
+
+            var genre = new Genre { Id = id, Name = createGenreDTO.Name };
 
             await repository.Update(genre);
             await outputCacheStore.EvictByTagAsync("genres-get", default);
@@ -63,8 +66,12 @@ namespace MoviesApp.Endpoints
             return TypedResults.NoContent();
         }
 
-        static async Task<Created<Genre>> CreateGenre(Genre genre, IGenresRepository repository, IOutputCacheStore outputCacheStore)
+        static async Task<Created<Genre>> CreateGenre(CreateGenreDTO createGenreDTO, IGenresRepository repository, IOutputCacheStore outputCacheStore)
         {
+            var genre = new Genre
+            {
+                Name = createGenreDTO.Name,
+            };
             var id = await repository.Create(genre);
             await outputCacheStore.EvictByTagAsync("genres-get", default);
             return TypedResults.Created($"/genres/{id}", genre);
