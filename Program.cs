@@ -26,6 +26,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IGenresRepository, GenresRepository>();
+builder.Services.AddAutoMapper(typeof(Program));
 //Serviços
 
 //Os serviços só podem ser alterados antes da aplicação ser criada, por isso a linha abaixo vem em seguida.
