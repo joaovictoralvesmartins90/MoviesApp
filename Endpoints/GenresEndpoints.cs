@@ -18,13 +18,14 @@ namespace MoviesApp.Endpoints
             return group;
         }
 
-        static async Task<Ok<List<Genre>>> GetGenres(IGenresRepository repository)
+        static async Task<Ok<List<GenreDTO>>> GetGenres(IGenresRepository repository)
         {
             var genres = await repository.GetAll();
-            return TypedResults.Ok(genres);
+            var genresDto = genres.Select(g => new GenreDTO { Id = g.Id, Name = g.Name }).ToList();
+            return TypedResults.Ok(genresDto);
         }
 
-        static async Task<Results<Ok<Genre>, NotFound>> GetGenre(int id, IGenresRepository repository)
+        static async Task<Results<Ok<GenreDTO>, NotFound>> GetGenre(int id, IGenresRepository repository)
         {
             var genre = await repository.GetById(id);
 
@@ -33,7 +34,13 @@ namespace MoviesApp.Endpoints
                 return TypedResults.NotFound();
             }
 
-            return TypedResults.Ok(genre);
+            var genreDto = new GenreDTO
+            {
+                Id = id,
+                Name = genre.Name
+            };
+
+            return TypedResults.Ok(genreDto);
         }
 
         static async Task<Results<NoContent, NotFound>> UpdateGenre(int id, CreateGenreDTO createGenreDTO, IGenresRepository repository, IOutputCacheStore outputCacheStore)
@@ -45,7 +52,11 @@ namespace MoviesApp.Endpoints
                 return TypedResults.NotFound();
             }
 
-            var genre = new Genre { Id = id, Name = createGenreDTO.Name };
+            var genre = new Genre
+            {
+                Id = id,
+                Name = createGenreDTO.Name
+            };
 
             await repository.Update(genre);
             await outputCacheStore.EvictByTagAsync("genres-get", default);
@@ -66,15 +77,23 @@ namespace MoviesApp.Endpoints
             return TypedResults.NoContent();
         }
 
-        static async Task<Created<Genre>> CreateGenre(CreateGenreDTO createGenreDTO, IGenresRepository repository, IOutputCacheStore outputCacheStore)
+        static async Task<Created<GenreDTO>> CreateGenre(CreateGenreDTO createGenreDTO, IGenresRepository repository, IOutputCacheStore outputCacheStore)
         {
             var genre = new Genre
             {
                 Name = createGenreDTO.Name,
             };
+
             var id = await repository.Create(genre);
             await outputCacheStore.EvictByTagAsync("genres-get", default);
-            return TypedResults.Created($"/genres/{id}", genre);
+
+            var genreDto = new GenreDTO
+            {
+                Id = id,
+                Name = createGenreDTO.Name
+            };
+
+            return TypedResults.Created($"/genres/{id}", genreDto);
         }
     }
 }
