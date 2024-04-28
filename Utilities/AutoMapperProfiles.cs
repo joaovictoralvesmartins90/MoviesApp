@@ -10,6 +10,8 @@ namespace MoviesApp.Utilities
         {
             CreateMap<Genre, GenreDTO>();
             CreateMap<CreateGenreDTO, Genre>();
+            CreateMap<Actor, ActorDTO>();
+            CreateMap<CreateActorDTO, Actor>();
         }
     }
 }
