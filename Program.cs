@@ -1,11 +1,7 @@
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using MoviesApp.DatabaseContext;
 using MoviesApp.Endpoints;
-using MoviesApp.Entities;
 using MoviesApp.Repositories;
-using System.Reflection.Metadata;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +17,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddOutputCache();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseMySQL(builder.Configuration.GetConnectionString("desenv_mysql")!);
+    options.UseMySQL(builder.Configuration.GetConnectionString("desenv_mysql_desktop")!);
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
