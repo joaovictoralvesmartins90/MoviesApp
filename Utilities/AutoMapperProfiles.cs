@@ -11,7 +11,7 @@ namespace MoviesApp.Utilities
             CreateMap<Genre, GenreDTO>();
             CreateMap<CreateGenreDTO, Genre>();
             CreateMap<Actor, ActorDTO>();
-            CreateMap<CreateActorDTO, Actor>();
+            CreateMap<CreateActorDTO, Actor>().ForMember(x => x.Picture, options => options.Ignore());
         }
     }
 }

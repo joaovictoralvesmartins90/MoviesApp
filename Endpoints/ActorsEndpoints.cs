@@ -1,6 +1,7 @@
 ﻿
 using AutoMapper;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using MoviesApp.DTOs;
 using MoviesApp.Entities;
@@ -14,7 +15,7 @@ namespace MoviesApp.Endpoints
         {
             group.MapGet("/", GetActors).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(10)).Tag("actors-get"));
             group.MapGet("/{id:int}", GetActorById);
-            group.MapPost("/", AddActor);
+            group.MapPost("/", AddActor).DisableAntiforgery();
             group.MapPut("/{id:int}", UpdateActor);
             group.MapDelete("/{id:int}", DeleteActor);
             return group;
@@ -52,15 +53,10 @@ namespace MoviesApp.Endpoints
             return TypedResults.NoContent();
         }
 
-        private static async Task<Created<ActorDTO>> AddActor(CreateActorDTO createActorDTO, IActorsRepository repository, IOutputCacheStore outputCacheStore,
+        private static async Task<Created<ActorDTO>> AddActor([FromForm] CreateActorDTO createActorDTO, IActorsRepository repository, IOutputCacheStore outputCacheStore,
             IMapper mapper)
         {
-            var actor = new Actor
-            {
-                Name = createActorDTO.Name,
-                DateOfBirth = createActorDTO.DateOfBirth,
-                Picture = createActorDTO.Picture,
-            };
+            var actor = mapper.Map<Actor>(createActorDTO);
             var id = await repository.Create(actor);
             await outputCacheStore.EvictByTagAsync("actors-get", default);
 
