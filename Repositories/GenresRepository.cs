@@ -35,7 +35,7 @@ namespace MoviesApp.Repositories
 
         public async Task<Genre?> GetById(int id)
         {
-            return await context.Genres.FirstOrDefaultAsync(g => g.Id == id);
+            return await context.Genres.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id);
         }
 
         public async Task Update(Genre genre)

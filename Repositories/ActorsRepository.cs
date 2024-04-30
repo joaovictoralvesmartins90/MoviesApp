@@ -37,7 +37,7 @@ namespace MoviesApp.Repositories
 
         public Task<Actor?> GetById(int id)
         {
-            return context.Actors.FirstOrDefaultAsync(x => x.Id == id);
+            return context.Actors.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task Update(Actor actor)
