@@ -14,9 +14,42 @@ namespace MoviesApp.Endpoints
         {
             group.MapGet("/", GetActors).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(10)).Tag("actors-get"));
             group.MapGet("/{id:int}", GetActorById);
-            group.MapGet("/", AddActor);
-            group.MapGet("/{id:int}", GetActorById);
+            group.MapPost("/", AddActor);
+            group.MapPut("/{id:int}", UpdateActor);
+            group.MapDelete("/{id:int}", DeleteActor);
             return group;
+        }
+
+        static async Task<Results<NoContent, NotFound>> DeleteActor(int id, IActorsRepository repository, IOutputCacheStore outputCacheStore)
+        {
+            var exists = await repository.Exists(id);
+
+            if (!exists)
+            {
+                return TypedResults.NotFound();
+            }
+
+            await repository.Delete(id);
+            await outputCacheStore.EvictByTagAsync("actors-get", default);
+            return TypedResults.NoContent();
+        }
+
+        static async Task<Results<NoContent, NotFound>> UpdateActor(int id, CreateActorDTO createActorDTO, IActorsRepository repository,
+            IOutputCacheStore outputCacheStore, IMapper mapper)
+        {
+            var exists = await repository.Exists(id);
+
+            if (!exists)
+            {
+                return TypedResults.NotFound();
+            }
+
+            var actor = mapper.Map<Actor>(createActorDTO);
+            actor.Id = id;
+
+            await repository.Update(actor);
+            await outputCacheStore.EvictByTagAsync("actors-get", default);
+            return TypedResults.NoContent();
         }
 
         private static async Task<Created<ActorDTO>> AddActor(CreateActorDTO createActorDTO, IActorsRepository repository, IOutputCacheStore outputCacheStore,

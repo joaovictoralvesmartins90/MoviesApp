@@ -40,6 +40,7 @@ app.UseOutputCache();
 //middleware
 
 app.MapGroup("/genres").MapGenres();
+app.MapGroup("/actors").MapActors();
 
 app.Run();
 
