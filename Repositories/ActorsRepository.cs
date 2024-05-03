@@ -25,6 +25,11 @@ namespace MoviesApp.Repositories
             await context.Actors.Where(x => x.Id == id).ExecuteDeleteAsync();
         }
 
+        public async Task<List<Actor>> GetByName(string name)
+        {
+            return await context.Actors.Where(a => a.Name.Contains(name)).OrderBy(a => a.Name).ToListAsync();
+        }
+
         public async Task<bool> Exists(int id)
         {
             return await context.Actors.AnyAsync(x => x.Id == id);

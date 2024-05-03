@@ -18,39 +18,55 @@ namespace MoviesApp.Endpoints
             group.MapGet("/", GetActors).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(10)).Tag("actors-get"));
             group.MapGet("/{id:int}", GetActorById);
             group.MapPost("/", AddActor).DisableAntiforgery();
-            group.MapPut("/{id:int}", UpdateActor);
+            group.MapPut("/{id:int}", UpdateActor).DisableAntiforgery();
             group.MapDelete("/{id:int}", DeleteActor);
+            group.MapGet("/getbyname/{name}", GetActorsByName);
             return group;
         }
 
-        static async Task<Results<NoContent, NotFound>> DeleteActor(int id, IActorsRepository repository, IOutputCacheStore outputCacheStore)
+        private static async Task<Ok<List<ActorDTO>>> GetActorsByName(string name, IActorsRepository repository, IMapper mapper)
         {
-            var exists = await repository.Exists(id);
+            var actors = await repository.GetByName(name);
+            var actorsDtos = mapper.Map<List<ActorDTO>>(actors);
+            return TypedResults.Ok(actorsDtos);
+        }
 
-            if (!exists)
+        static async Task<Results<NoContent, NotFound>> DeleteActor(int id, IActorsRepository repository, IOutputCacheStore outputCacheStore,
+            IFileStorage fileStorage)
+        {
+            var actor = await repository.GetById(id);
+
+            if (actor is null)
             {
                 return TypedResults.NotFound();
             }
-
+            await fileStorage.Delete(actor.Picture, container);
             await repository.Delete(id);
             await outputCacheStore.EvictByTagAsync("actors-get", default);
             return TypedResults.NoContent();
         }
 
-        static async Task<Results<NoContent, NotFound>> UpdateActor(int id, CreateActorDTO createActorDTO, IActorsRepository repository,
-            IOutputCacheStore outputCacheStore, IMapper mapper)
+        static async Task<Results<NoContent, NotFound>> UpdateActor(int id, [FromForm] CreateActorDTO createActorDTO, IActorsRepository repository,
+            IOutputCacheStore outputCacheStore, IMapper mapper, IFileStorage filestorage)
         {
-            var exists = await repository.Exists(id);
+            var actor = await repository.GetById(id);
 
-            if (!exists)
+            if (actor is null)
             {
                 return TypedResults.NotFound();
             }
 
-            var actor = mapper.Map<Actor>(createActorDTO);
-            actor.Id = id;
+            var actorUpdate = mapper.Map<Actor>(createActorDTO);
+            actorUpdate.Id = id;
+            actorUpdate.Picture = actor.Picture;
 
-            await repository.Update(actor);
+            if (createActorDTO.Picture is not null)
+            {
+                var url = await filestorage.Edit(actorUpdate.Picture, container, createActorDTO.Picture);
+                actorUpdate.Picture = url;
+            }
+
+            await repository.Update(actorUpdate);
             await outputCacheStore.EvictByTagAsync("actors-get", default);
             return TypedResults.NoContent();
         }
@@ -60,7 +76,7 @@ namespace MoviesApp.Endpoints
         {
             var actor = mapper.Map<Actor>(createActorDTO);
 
-            if(createActorDTO.Picture is not null)
+            if (createActorDTO.Picture is not null)
             {
                 var url = await fileStorage.Store(container, createActorDTO.Picture);
                 actor.Picture = url;
