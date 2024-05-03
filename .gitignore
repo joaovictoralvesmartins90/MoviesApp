@@ -14,7 +14,7 @@ wwwroot
 
 # Visual Studio
 .vs/
-
+appsettings.Development.json
 # Fleet
 .fleet/
 
