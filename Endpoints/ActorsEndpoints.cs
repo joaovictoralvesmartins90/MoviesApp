@@ -6,11 +6,13 @@ using Microsoft.AspNetCore.OutputCaching;
 using MoviesApp.DTOs;
 using MoviesApp.Entities;
 using MoviesApp.Repositories;
+using MoviesApp.Services;
 
 namespace MoviesApp.Endpoints
 {
     public static class ActorsEndpoints
     {
+        private readonly static string container = "actors";
         public static RouteGroupBuilder MapActors(this RouteGroupBuilder group)
         {
             group.MapGet("/", GetActors).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(10)).Tag("actors-get"));
@@ -54,9 +56,16 @@ namespace MoviesApp.Endpoints
         }
 
         private static async Task<Created<ActorDTO>> AddActor([FromForm] CreateActorDTO createActorDTO, IActorsRepository repository, IOutputCacheStore outputCacheStore,
-            IMapper mapper)
+            IMapper mapper, IFileStorage fileStorage)
         {
             var actor = mapper.Map<Actor>(createActorDTO);
+
+            if(createActorDTO.Picture is not null)
+            {
+                var url = await fileStorage.Store(container, createActorDTO.Picture);
+                actor.Picture = url;
+            }
+
             var id = await repository.Create(actor);
             await outputCacheStore.EvictByTagAsync("actors-get", default);
 

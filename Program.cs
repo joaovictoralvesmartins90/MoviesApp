@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MoviesApp.DatabaseContext;
 using MoviesApp.Endpoints;
 using MoviesApp.Repositories;
+using MoviesApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,13 +18,15 @@ builder.Services.AddCors(options =>
 builder.Services.AddOutputCache();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseMySQL(builder.Configuration.GetConnectionString("desenv_mysql_desktop")!);
+    options.UseMySQL(builder.Configuration.GetConnectionString("desenv_mysql")!);
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IGenresRepository, GenresRepository>();
 builder.Services.AddScoped<IActorsRepository, ActorsRepository>();
 builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddTransient<IFileStorage, LocalFileStorage>();
+builder.Services.AddHttpContextAccessor();
 //Serviços
 
 //Os serviços só podem ser alterados antes da aplicação ser criada, por isso a linha abaixo vem em seguida.
@@ -37,6 +40,7 @@ if (builder.Environment.IsDevelopment())
 }
 app.UseCors();
 app.UseOutputCache();
+app.UseStaticFiles();
 //middleware
 
 app.MapGroup("/genres").MapGenres();
