@@ -1,16 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MoviesApp.DatabaseContext;
+using MoviesApp.DTOs;
 using MoviesApp.Entities;
 
 namespace MoviesApp.Repositories
 {
-    public class GenresRepository : IGenresRepository
+    public class GenresRepository(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor) : IGenresRepository
     {
-        private readonly ApplicationDbContext context;
-
-        public GenresRepository(ApplicationDbContext context) {
-            this.context = context;
-        }
+               
         public async Task<int> Create(Genre genre)
         {
             context.Add(genre);//marca para ser inserido posteriormente
@@ -28,13 +25,15 @@ namespace MoviesApp.Repositories
             return await context.Genres.AnyAsync(x => x.Id == id);
         }
 
-        public async Task<List<Genre>> GetAll()
+        public async Task<List<Genre>> GetAll(PaginationDTO pagination)
         {
-            return await context.Genres.OrderBy(g => g.Name).ToListAsync();
+            var queryable = context.Genres.AsQueryable();
+            await httpContextAccessor.HttpContext!.InsertPaginationParameterInResponseHeader(queryable);
+            return await queryable.OrderBy(g => g.Name).Paginate(pagination).ToListAsync();
         }
 
         public async Task<Genre?> GetById(int id)
-        {
+        {            
             return await context.Genres.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id);
         }
 

@@ -19,9 +19,11 @@ namespace MoviesApp.Endpoints
             return group;
         }
 
-        static async Task<Ok<List<GenreDTO>>> GetGenres(IGenresRepository repository, IMapper mapper)
+        static async Task<Ok<List<GenreDTO>>> GetGenres(IGenresRepository repository, IMapper mapper,
+            int page = 1, int recordsPerPage = 10)
         {
-            var genres = await repository.GetAll();
+            PaginationDTO pagination = new PaginationDTO { Page = page, RecordsPerPage = recordsPerPage};
+            var genres = await repository.GetAll(pagination);
             var genresDto = mapper.Map<List<GenreDTO>>(genres);
             return TypedResults.Ok(genresDto);
         }

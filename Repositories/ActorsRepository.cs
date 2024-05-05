@@ -1,17 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MoviesApp.DatabaseContext;
+using MoviesApp.DTOs;
 using MoviesApp.Entities;
 
 namespace MoviesApp.Repositories
 {
-    public class ActorsRepository : IActorsRepository
+    public class ActorsRepository(ApplicationDbContext context,
+        IHttpContextAccessor httpContextAccessor) : IActorsRepository
     {
-        private readonly ApplicationDbContext context;
-
-        public ActorsRepository(ApplicationDbContext context)
-        {
-            this.context = context;
-        }
 
         public async Task<int> Create(Actor actor)
         {
@@ -35,9 +31,11 @@ namespace MoviesApp.Repositories
             return await context.Actors.AnyAsync(x => x.Id == id);
         }
 
-        public async Task<List<Actor>> GetAll()
+        public async Task<List<Actor>> GetAll(PaginationDTO pagination)
         {
-            return await context.Actors.OrderBy(x => x.Name).ToListAsync();
+            var queryable = context.Actors.AsQueryable();
+            await httpContextAccessor.HttpContext!.InsertPaginationParameterInResponseHeader(queryable);
+            return await queryable.OrderBy(x => x.Name).Paginate(pagination).ToListAsync();
         }
 
         public Task<Actor?> GetById(int id)
